@@ -5,40 +5,6 @@ PWD = $(shell readlink -f .)
 XF_PROJ_ROOT = $(shell readlink -f $(COMMON_REPO))
 PLATFORM ?= xilinx_u55c_gen3x16_xdma_3_202210_1
 
-########################## Checking if PLATFORM in allowlist #######################
-# PLATFORM_BLOCKLIST += nodma 
-# # PLATFORM ?= xilinx_u55c_gen3x16_xdma_3_202210_1
-# DEV_ARCH := $(shell platforminfo -p $(PLATFORM) | grep 'FPGA Family' | sed 's/.*://' | sed '/ai_engine/d' | sed 's/^[[:space:]]*//')
-# # platforminfo -p xilinx_u55c_gen3x16_xdma_3_202210_1 | grep 'FPGA Family'  | sed 's/.*://' | sed '/ai_engine/d' | sed 's/^[[:space:]]*//'
-# # ↑ virtexuplusHBM
-# CPU_TYPE := $(shell platforminfo -p $(PLATFORM) | grep 'CPU Type' | sed 's/.*://' | sed '/ai_engine/d' | sed 's/^[[:space:]]*//')
-# # platforminfo -p xilinx_u55c_gen3x16_xdma_3_202210_1 | grep 'CPU Type' | sed 's/.*://' | sed '/ai_engine/d' | sed 's/^[[:space:]]*//'
-# # ↑ x86
-
-# ifeq ($(CPU_TYPE), cortex-a9)
-# HOST_ARCH := aarch32
-# else ifneq (,$(findstring cortex-a, $(CPU_TYPE)))
-# HOST_ARCH := aarch64
-# else
-# HOST_ARCH := x86
-# endif
-
-# ifeq ($(DEV_ARCH), zynquplus)
-# ifeq ($(HOST_ARCH), aarch64)
-# include makefile_zynqmp.mk
-# else
-# include makefile_us_alveo.mk
-# endif
-# else ifeq ($(DEV_ARCH), versal)
-# ifeq ($(HOST_ARCH), x86)
-# include makefile_versal_alveo.mk
-# else
-# include makefile_versal_ps.mk 
-# endif
-# else
-# include makefile_us_alveo.mk # <<< this one
-# endif
-
 ############################## Setting up Project Variables ##############################
 TARGET := hw
 VPP_LDFLAGS :=

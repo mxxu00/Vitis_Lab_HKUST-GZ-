@@ -1,9 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-// Author:      <>
 // Course:      ECE8893 - Parallel Programming for FPGAs
 // Filename:    conv_7x7.cpp
-// Description: Implement a functionally-correct synthesizable 7x7 convolution 
-//              for a single tile block without any optimizations
+// Description: Reference implementation of 7x7 convolution for a 
+//              single tile block.
 ///////////////////////////////////////////////////////////////////////////////
 #include "utils.h"
 
@@ -14,16 +13,32 @@ void conv_7x7 (
     wt_t B_buf[OUT_BUF_DEPTH]
 )
 {
-//---------------------------------------------------------------------------
-// Part B: Implement a trivial functionally-correct single-tile convolution.
-//
-//         This should have an overall latency in the order of 22-23 seconds.
-//
-//         If it's worse than trivial, it may be worth fixing this first.
-//         Otherwise, achieving the target latency with a worse-than-trivial
-//         baseline may be difficult!
-//
-// TODO: Your code for Part B goes here. 
-//---------------------------------------------------------------------------
-
+    ID:
+    for(int c = 0; c < IN_BUF_DEPTH; c++)
+    {
+        KH: 
+        for(int m = 0; m < KERNEL_HEIGHT; m++) 
+        {
+            KW: 
+            for(int n = 0; n < KERNEL_WIDTH; n++) 
+            {
+                OW: 
+                for(int j = 0; j < TILE_WIDTH; j+=STRIDE) 
+                {
+                    OH: 
+                    for(int i = 0; i < TILE_HEIGHT; i+=STRIDE) 
+                    {
+                        OD: 
+                        for(int f = 0; f < OUT_BUF_DEPTH; f++)
+                        {
+                            if(c==0 && m==0 && n==0)
+                                Y_buf[f][i/STRIDE][j/STRIDE]  = B_buf[f] + X_buf[c][i+m][j+n] * W_buf[f][c][m][n];
+                            else
+                                Y_buf[f][i/STRIDE][j/STRIDE] += X_buf[c][i+m][j+n] * W_buf[f][c][m][n];
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

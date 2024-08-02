@@ -17,13 +17,13 @@ COMMON_DIR := $(ROOT_DIR)/common
 TEMP_DIR := ./_x.$(TARGET).$(XSA)
 BUILD_DIR := ./build_dir.$(TARGET).$(XSA)
 
-LINK_OUTPUT := $(BUILD_DIR)/complex_matmul.link.xclbin
+LINK_OUTPUT := $(BUILD_DIR)/kernel.link.xclbin
 PACKAGE_OUT = ./package.$(TARGET)
 
 CXXFLAGS += -I$(COMMON_DIR)  -I$(XILINX_XRT)/include/CL
 
 VPP_PFLAGS := 
-CMD_ARGS = $(BUILD_DIR)/complex_matmul.xclbin
+CMD_ARGS = $(BUILD_DIR)/kernel.xclbin
 CXXFLAGS += -I$(XILINX_XRT)/include -I$(XILINX_VIVADO)/include -I$(XILINX_HLS)/include -Wall -O0 -g -std=c++1y
 LDFLAGS += -L$(XILINX_XRT)/lib -pthread -lOpenCL
 
@@ -47,32 +47,39 @@ LDFLAGS += -lxrt_core
 # Kernel compiler global settings
 VPP_FLAGS += --save-temps 
 
-
-EXECUTABLE = ./complex_matmul
+EXECUTABLE = ./kernel_exec
 EMCONFIG_DIR = $(TEMP_DIR)
 
 ############################## Setting Targets ##############################
 .PHONY: all clean cleanall docs emconfig
-all: check-platform check-device check-vitis $(EXECUTABLE) $(BUILD_DIR)/complex_matmul.xclbin emconfig
+all: check-platform check-device check-vitis $(EXECUTABLE) $(BUILD_DIR)/kernel.xclbin emconfig
 
 .PHONY: host
 host: $(EXECUTABLE)
 
 .PHONY: build
-build: check-vitis check-device $(BUILD_DIR)/complex_matmul.xclbin
+build: check-vitis check-device $(BUILD_DIR)/kernel.xclbin
 
 .PHONY: xclbin
 xclbin: build
 
 ############################## Setting Rules for Binary Containers (Building Kernels) ##############################
-$(TEMP_DIR)/complex_matmul.xo: src/complex_matmul.cpp
+$(TEMP_DIR)/utils.o: ../utils.cpp
 	mkdir -p $(TEMP_DIR)
-	v++ -c $(VPP_FLAGS) -t $(TARGET) --platform $(PLATFORM) -k complex_matmul --temp_dir $(TEMP_DIR)  -I'$(<D)' -o'$@' '$<'
+	v++ -c $(VPP_FLAGS) -t $(TARGET) --platform $(PLATFORM) -k utils --temp_dir $(TEMP_DIR)  -I'$(<D)' -o'$@' '$<'
 
-$(BUILD_DIR)/complex_matmul.xclbin: $(TEMP_DIR)/complex_matmul.xo
+$(TEMP_DIR)/conv_7x7.o: ../conv_7x7.cpp
+	mkdir -p $(TEMP_DIR)
+	v++ -c $(VPP_FLAGS) -t $(TARGET) --platform $(PLATFORM) -k conv_7x7 --temp_dir $(TEMP_DIR)  -I'$(<D)' -o'$@' '$<'
+
+$(TEMP_DIR)/tiled_conv.o: ../tiled_conv.cpp
+	mkdir -p $(TEMP_DIR)
+	v++ -c $(VPP_FLAGS) -t $(TARGET) --platform $(PLATFORM) -k tiled_conv --temp_dir $(TEMP_DIR)  -I'$(<D)' -o'$@' '$<'
+
+$(BUILD_DIR)/kernel.xclbin: $(TEMP_DIR)/utils.o $(TEMP_DIR)/conv_7x7.o $(TEMP_DIR)/tiled_conv.o
 	mkdir -p $(BUILD_DIR)
 	v++ -l $(VPP_FLAGS) $(VPP_LDFLAGS) -t $(TARGET) --platform $(PLATFORM) --temp_dir $(TEMP_DIR) -o'$(LINK_OUTPUT)' $(+)
-	v++ -p $(LINK_OUTPUT) $(VPP_FLAGS) -t $(TARGET) --platform $(PLATFORM) --package.out_dir $(PACKAGE_OUT) -o $(BUILD_DIR)/complex_matmul.xclbin
+	v++ -p $(LINK_OUTPUT) $(VPP_FLAGS) -t $(TARGET) --platform $(PLATFORM) --package.out_dir $(PACKAGE_OUT) -o $(BUILD_DIR)/kernel.xclbin
 
 ############################## Setting Rules for Host (Building Host Executable) ##############################
 $(EXECUTABLE): $(HOST_SRCS) | check-xrt
@@ -112,6 +119,3 @@ cleanall: clean
 	-$(RMDIR) _x* *xclbin.run_summary qemu-memory-_* emulation _vimage pl* start_simulation.sh *.xclbin
 
 	-$(RMDIR) *.compile_summary *.ltx *.info *.link_summary *.package_summary *.xo
-
-
-

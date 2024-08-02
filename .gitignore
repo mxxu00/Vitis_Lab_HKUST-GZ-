@@ -1,1 +1,13 @@
 _x.*/
+.ipcache/
+.Xil/
+build_dir.*/
+package.hw/
+*.log
+_x/
+*.bin
+*.py
+
+real_matmul
+complex_matmul
+tiling_convolution

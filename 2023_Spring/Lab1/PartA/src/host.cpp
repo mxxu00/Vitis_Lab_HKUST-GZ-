@@ -5,7 +5,7 @@
 
 // Xilinx OpenCL and XRT includes
 #include "xilinx_ocl_helper.hpp"
-#define DATA_SIZE (MATRIX_M * MATRIX_N * MATRIX_K)
+#define DATA_SIZE (M_M * M_N * M_K)
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -19,38 +19,38 @@ int main(int argc, char** argv) {
     cl::CommandQueue q = xocl.get_command_queue();
     cl::Kernel krnl = xocl.get_kernel("real_matmul");
 
-    size_t matrix_a_size_bytes = sizeof(real_t) * MATRIX_M * MATRIX_N;
-    size_t matrix_b_size_bytes = sizeof(real_t) * MATRIX_N * MATRIX_K;
-    size_t matrix_c_size_bytes = sizeof(real_t) * MATRIX_M * MATRIX_K;
+    size_t matrix_a_size_bytes = sizeof(real_t) * M_M * M_N;
+    size_t matrix_b_size_bytes = sizeof(real_t) * M_N * M_K;
+    size_t matrix_c_size_bytes = sizeof(real_t) * M_M * M_K;
 
     std::cout << "Allocate Buffer in Global Memory\n";
     cl::Buffer a_to_device(xocl.get_context(), CL_MEM_READ_ONLY, matrix_a_size_bytes);
     cl::Buffer b_to_device(xocl.get_context(), CL_MEM_READ_ONLY, matrix_b_size_bytes);
     cl::Buffer c_from_device(xocl.get_context(), CL_MEM_WRITE_ONLY, matrix_c_size_bytes);
 
-    real_t* a = new real_t[MATRIX_M * MATRIX_N];
-    real_t* b = new real_t[MATRIX_N * MATRIX_K];
-    real_t* c = new real_t[MATRIX_M * MATRIX_K];
-    real_t MatC_expected[MATRIX_M][MATRIX_K];
+    real_t* a = new real_t[M_M * M_N];
+    real_t* b = new real_t[M_N * M_K];
+    real_t* c = new real_t[M_M * M_K];
+    real_t MatC_expected[M_M][M_K];
 
     std::cout << "Populating buffer inputs\n";
-    for (int i = 0; i < MATRIX_M; i++) {
-        for (int j = 0; j < MATRIX_N; j++) {
-            a[i * MATRIX_N + j] = rand() % 50;
+    for (int i = 0; i < M_M; i++) {
+        for (int j = 0; j < M_N; j++) {
+            a[i * M_N + j] = rand() % 50;
         }
     }
 
-    for (int i = 0; i < MATRIX_N; i++) {
-        for (int j = 0; j < MATRIX_K; j++) {
-            b[i * MATRIX_K + j] = rand() % 50;
+    for (int i = 0; i < M_N; i++) {
+        for (int j = 0; j < M_K; j++) {
+            b[i * M_K + j] = rand() % 50;
         }
     }
 
-    for (int i = 0; i < MATRIX_M; i++) {
-        for (int j = 0; j < MATRIX_K; j++) {
+    for (int i = 0; i < M_M; i++) {
+        for (int j = 0; j < M_K; j++) {
             MatC_expected[i][j] = 0;
-            for (int p = 0; p < MATRIX_N; p++) {
-                MatC_expected[i][j] += a[i * MATRIX_N + p] * b[p * MATRIX_K + j];
+            for (int p = 0; p < M_N; p++) {
+                MatC_expected[i][j] += a[i * M_N + p] * b[p * M_K + j];
             }
         }
     }
@@ -63,9 +63,9 @@ int main(int argc, char** argv) {
     krnl.setArg(0, a_to_device);
     krnl.setArg(1, b_to_device);
     krnl.setArg(2, c_from_device);
-    // krnl.setArg(3, MATRIX_M);
-    // krnl.setArg(4, MATRIX_N);
-    // krnl.setArg(5, MATRIX_K);
+    // krnl.setArg(3, M_M);
+    // krnl.setArg(4, M_N);
+    // krnl.setArg(5, M_K);
 
     std::cout << "Execution of the kernel\n";
     cl::Event event;
@@ -76,11 +76,11 @@ int main(int argc, char** argv) {
     q.enqueueReadBuffer(c_from_device, CL_TRUE, 0, matrix_c_size_bytes, c);
 
     bool match = true;
-    for (int i = 0; i < MATRIX_M; i++) {
-        for (int j = 0; j < MATRIX_K; j++) {
-            if (c[i * MATRIX_K + j] != MatC_expected[i][j]) {
+    for (int i = 0; i < M_M; i++) {
+        for (int j = 0; j < M_K; j++) {
+            if (c[i * M_K + j] != MatC_expected[i][j]) {
                 match = false;
-                std::cerr << "Mismatch at (" << i << ", " << j << "): " << c[i * MATRIX_K + j] << " != " << MatC_expected[i][j] << std::endl;
+                std::cerr << "Mismatch at (" << i << ", " << j << "): " << c[i * M_K + j] << " != " << MatC_expected[i][j] << std::endl;
                 break;
             }
         }
